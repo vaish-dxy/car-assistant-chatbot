@@ -1,0 +1,11 @@
+name,price,fuel,type,mileage,transmission,description,link
+Hyundai Creta,1500000,petrol,suv,17,automatic,Popular compact SUV with modern features,https://www.hyundai.com/creta
+Tata Nexon,1400000,petrol,suv,16,manual,5 star safety rated compact SUV,https://cars.tatamotors.com/nexon
+Kia Seltos,1550000,petrol,suv,16,automatic,Premium SUV with stylish design,https://www.kia.com/seltos
+Honda City,1600000,petrol,sedan,18,automatic,Comfortable family sedan with smooth engine,https://www.honda.com/city
+Maruti Brezza,1350000,petrol,suv,17,manual,Reliable compact SUV with good mileage,https://www.maruti.com/brezza
+Mahindra XUV300,1450000,petrol,suv,16,manual,Powerful SUV with good safety rating,https://www.mahindra.com/xuv300
+Hyundai Venue,1250000,petrol,suv,18,manual,Compact SUV suitable for city driving,https://www.hyundai.com/venue
+Toyota Fortuner,3500000,diesel,suv,12,automatic,Premium large SUV with strong road presence,https://www.toyota.com/fortuner
+MG ZS EV,2300000,electric,suv,420,automatic,Electric SUV with long range battery,https://www.mgmotor.co.in/zsev
+Tata Tiago,700000,petrol,hatchback,20,manual,Affordable hatchback with good mileage,https://cars.tatamotors.com/tiago

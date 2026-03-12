@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0e0e0f;
+      --surface: #161618;
+      --border: #2a2a2e;
+      --accent: #d4ff58;
+      --accent-dim: rgba(212,255,88,0.12);
+      --text: #e8e8e2;
+      --muted: #6b6b72;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.35rem;
+      font-style: italic;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ─── MESSAGES ─── */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .msg-row {
+      display: flex;
+      padding: 14px 28px;
+      gap: 14px;
+      animation: fadeIn 0.25s ease;
+      transition: background 0.15s;
+    }
+
+    .msg-row:hover { background: rgba(255,255,255,0.02); }
+
+    .msg-row.user { flex-direction: row-reverse; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 500;
+      flex-shrink: 0;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    .avatar.bot  { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(212,255,88,0.25); }
+    .avatar.user { background: #1e1e22; color: var(--muted); border: 1px solid var(--border); }
+
+    .bubble {
+      max-width: 680px;
+      font-size: 0.875rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    .msg-row.user .bubble {
+      text-align: right;
+      color: #c8c8c2;
+    }
+
+    /* ─── TYPING INDICATOR ─── */
+    .typing-dots {
+      display: flex; gap: 5px; align-items: center; padding: 4px 0;
+    }
+    .typing-dots span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); opacity: 0.4; }
+      40%          { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ─── INPUT AREA ─── */
+    footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      transition: border-color 0.2s;
+    }
+    .input-wrap:focus-within { border-color: rgba(212,255,88,0.4); }
+
+    #userInput {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.875rem;
+      resize: none;
+      min-height: 22px;
+      max-height: 160px;
+      line-height: 1.6;
+    }
+
+    #userInput::placeholder { color: var(--muted); }
+
+    #sendBtn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: var(--accent);
+      color: #0e0e0f;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s, transform 0.1s;
+      font-size: 0.8rem;
+    }
+    #sendBtn:hover:not(:disabled) { opacity: 0.85; }
+    #sendBtn:active:not(:disabled) { transform: scale(0.93); }
+    #sendBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .hint {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 8px;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    #emptyState {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+    }
+    #emptyState .big { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 2rem; color: var(--text); opacity: 0.15; }
+    #emptyState p { font-size: 0.8rem; letter-spacing: 0.05em; }
+
+    /* ─── ERROR TOAST ─── */
+    #errorToast {
+      position: fixed;
+      bottom: 100px; left: 50%; transform: translateX(-50%);
+      background: #2a1a1a;
+      border: 1px solid #5a2a2a;
+      color: #ff8080;
+      font-size: 0.78rem;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 99;
+      animation: fadeIn 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <span class="brand">assistant.</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;" id="statusLabel">ONLINE</span>
+      <div class="status-dot" id="statusDot"></div>
+    </div>
+  </header>
+
+  <!-- MESSAGES -->
+  <div id="messages">
+    <div id="emptyState">
+      <div class="big">Hello.</div>
+      <p>Start a conversation below.</p>
+    </div>
+  </div>
+
+  <!-- ERROR TOAST -->
+  <div id="errorToast"></div>
+
+  <!-- INPUT -->
+  <footer>
+    <div class="input-wrap">
+      <textarea id="userInput" rows="1" placeholder="Type a message…"></textarea>
+      <button id="sendBtn" title="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+    <p class="hint">⏎ to send &nbsp;·&nbsp; Shift+⏎ for new line</p>
+  </footer>
+
+<script>
+  /* ================================================================
+   *  ██████╗  █████╗  ██████╗██╗  ██╗███████╗███╗   ██╗██████╗
+   *  ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝████╗  ██║██╔══██╗
+   *  ██████╔╝███████║██║     █████╔╝ █████╗  ██╔██╗ ██║██║  ██║
+   *  ██╔══██╗██╔══██║██║     ██╔═██╗ ██╔══╝  ██║╚██╗██║██║  ██║
+   *  ██████╔╝██║  ██║╚██████╗██║  ██╗███████╗██║ ╚████║██████╔╝
+   *  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚═════╝
+   *
+   *  PYTHON BACKEND INTEGRATION
+   *  ─────────────────────────────────────────────────────────────
+   *  1. Set API_BASE_URL to your Python server's base URL.
+   *  2. sendMessage() hits POST /chat — adjust endpoint + payload
+   *     to match your FastAPI / Flask / Django route exactly.
+   *  3. The expected JSON response shape is documented below.
+   *     Update parseResponse() if your schema differs.
+   * ================================================================ */
+
+  const CONFIG = {
+    // ── YOUR BACKEND BASE URL ──────────────────────────────────────
+    API_BASE_URL: "http://localhost:5001",
+
+    // ── CHAT ENDPOINT ─────────────────────────────────────────────
+    CHAT_ENDPOINT: "/chat",                 // POST {API_BASE_URL}/chat
+
+    // ── REQUEST HEADERS ───────────────────────────────────────────
+    HEADERS: {
+      "Content-Type": "application/json",
+      // "Authorization": "Bearer YOUR_TOKEN",  // uncomment if needed
+    },
+
+    // ── REQUEST TIMEOUT (ms) ──────────────────────────────────────
+    TIMEOUT_MS: 30000,
+
+    // ── ENABLE STREAMING (if your backend supports SSE / chunks) ──
+    STREAMING: false,
+  };
+
+  /* ────────────────────────────────────────────────────────────────
+   *  BUILD REQUEST PAYLOAD
+   *  Backend keeps history in memory per session_id; we only send message + session_id.
+   * ──────────────────────────────────────────────────────────────── */
+  function buildPayload(userMessage, sessionId) {
+    return {
+      message: userMessage,
+      session_id: sessionId,
+    };
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+   *  PARSE RESPONSE
+   *  Reads the JSON returned by your Python backend.
+   *  Adjust the field path to match your response schema.
+   *
+   *  Examples:
+   *    FastAPI simple:   data.reply
+   *    LangChain:        data.output
+   *    OpenAI-proxy:     data.choices[0].message.content
+   * ──────────────────────────────────────────────────────────────── */
+  function parseResponse(data) {
+    return (
+      data.reply        ||   // ← adjust to your field name
+      data.response     ||
+      data.output       ||
+      data.answer       ||
+      data?.choices?.[0]?.message?.content ||
+      "No response received."
+    );
+  }
+
+  /* ────────────────────────────────────────────────────────────────
+   *  SEND MESSAGE — core API call
+   *  Returns the assistant reply string, or throws on error.
+   * ──────────────────────────────────────────────────────────────── */
+  async function sendMessage(userMessage, sessionId) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), CONFIG.TIMEOUT_MS);
+
+    try {
+      const url = CONFIG.API_BASE_URL + "/chat";
+      const response = await fetch(
+        url,
+        {
+          method: "POST",
+          headers: CONFIG.HEADERS,
+          body: JSON.stringify(buildPayload(userMessage, sessionId)),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errBody}`);
+      }
+
+      const data = await response.json();
+      return parseResponse(data);
+
+    } catch (err) {
+      clearTimeout(timer);
+      if (err.name === "AbortError") throw new Error("Request timed out.");
+      throw err;
+    }
+  }
+
+  /* ================================================================
+   *  UI STATE
+   * ================================================================ */
+  const messagesEl  = document.getElementById("messages");
+  const inputEl     = document.getElementById("userInput");
+  const sendBtn     = document.getElementById("sendBtn");
+  const emptyState  = document.getElementById("emptyState");
+  const errorToast  = document.getElementById("errorToast");
+
+  // Stable session id for this tab; backend keeps history per session_id
+  const sessionId = "session-" + Math.random().toString(36).slice(2, 12);
+  // Local history for UI only (backend has its own per session_id)
+  let history = [];   // [{ role: "user"|"assistant", content: "..." }, ...]
+  let isLoading = false;
+
+  /* ── APPEND MESSAGE ──────────────────────────────────────────── */
+  function appendMessage(role, text) {
+    if (emptyState) emptyState.remove();
+
+    const row = document.createElement("div");
+    row.className = `msg-row ${role}`;
+
+    const avatar = document.createElement("div");
+    avatar.className = `avatar ${role === "user" ? "user" : "bot"}`;
+    avatar.textContent = role === "user" ? "YOU" : "AI";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+    return bubble;
+  }
+
+  /* ── TYPING INDICATOR ────────────────────────────────────────── */
+  function showTyping() {
+    const row = document.createElement("div");
+    row.className = "msg-row bot";
+    row.id = "typingRow";
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar bot";
+    avatar.textContent = "AI";
+
+    const dots = document.createElement("div");
+    dots.className = "typing-dots";
+    dots.innerHTML = "<span></span><span></span><span></span>";
+
+    row.appendChild(avatar);
+    row.appendChild(dots);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+
+  function hideTyping() {
+    document.getElementById("typingRow")?.remove();
+  }
+
+  /* ── ERROR TOAST ─────────────────────────────────────────────── */
+  function showError(msg) {
+    errorToast.textContent = `⚠ ${msg}`;
+    errorToast.style.display = "block";
+    setTimeout(() => { errorToast.style.display = "none"; }, 4000);
+  }
+
+  /* ── SCROLL ──────────────────────────────────────────────────── */
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  /* ── HANDLE SUBMIT ───────────────────────────────────────────── */
+  async function handleSubmit() {
+    const text = inputEl.value.trim();
+    if (!text || isLoading) return;
+
+    isLoading = true;
+    sendBtn.disabled = true;
+    inputEl.value = "";
+    autoResize();
+
+    // Add to UI & history
+    appendMessage("user", text);
+    history.push({ role: "user", content: text });
+
+    showTyping();
+
+    try {
+      const reply = await sendMessage(text, sessionId);
+      hideTyping();
+      appendMessage("assistant", reply);
+      history.push({ role: "assistant", content: reply });
+    } catch (err) {
+      hideTyping();
+      const msg = err.message || "Failed to reach backend.";
+      showError(msg + " (Is backend running at " + CONFIG.API_BASE_URL + "?)");
+      // Rollback history on error
+      history.pop();
+    } finally {
+      isLoading = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  /* ── AUTO RESIZE TEXTAREA ────────────────────────────────────── */
+  function autoResize() {
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + "px";
+  }
+
+  /* ── EVENT LISTENERS ─────────────────────────────────────────── */
+  sendBtn.addEventListener("click", handleSubmit);
+
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  });
+
+  inputEl.addEventListener("input", autoResize);
+
+  /* ── Backend connection status ─────────────────────────────────── */
+  const statusLabel = document.getElementById("statusLabel");
+  const statusDot = document.getElementById("statusDot");
+  async function checkBackend() {
+    try {
+      const r = await fetch(`${CONFIG.API_BASE_URL}/health`);
+      if (r.ok) {
+        statusLabel.textContent = "ONLINE";
+        if (statusDot) statusDot.style.background = "var(--accent)";
+      } else {
+        statusLabel.textContent = "BACKEND ERROR";
+        if (statusDot) statusDot.style.background = "#ff8080";
+      }
+    } catch {
+      statusLabel.textContent = "OFFLINE";
+      if (statusDot) statusDot.style.background = "#ff8080";
+    }
+  }
+  checkBackend();
+
+  inputEl.focus();
+</script>
+</body>
+</html>
