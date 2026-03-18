@@ -17,6 +17,23 @@
       --muted: #6b6b72;
     }
 
+    .quick-btn {
+  background: #1e1e22;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+
+.quick-btn:hover {
+  background: rgba(212,255,88,0.1);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -243,6 +260,16 @@
 
   <!-- ERROR TOAST -->
   <div id="errorToast"></div>
+  <div style="padding:10px 28px;">
+    <p style="color:var(--muted); font-size:12px;">Quick Filters:</p>
+
+    <button class="quick-btn" onclick="quickQuery('petrol car')">Petrol</button>
+    <button class="quick-btn" onclick="quickQuery('diesel car')">Diesel</button>
+    <button class="quick-btn" onclick="quickQuery('electric car')">Electric</button>
+
+    <button class="quick-btn" onclick="quickQuery('SUV under 15 lakh')">SUV</button>
+    <button class="quick-btn" onclick="quickQuery('sedan under 20 lakh')">Sedan</button>
+  </div>
 
   <!-- INPUT -->
   <footer>
@@ -508,6 +535,11 @@
     }
   }
   checkBackend();
+
+  function quickQuery(text) {
+  inputEl.value = text;
+  handleSubmit();
+}
 
   inputEl.focus();
 </script>
